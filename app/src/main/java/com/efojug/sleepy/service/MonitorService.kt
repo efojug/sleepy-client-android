@@ -5,36 +5,56 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
-import androidx.core.app.ServiceCompat
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.efojug.sleepy.MainActivity
+import com.efojug.sleepy.datastore.PreferencesManager
+import com.efojug.sleepy.worker.StatusWorker
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.TimeUnit
 
 class MonitorService : Service() {
-    private val CHANNEL_ID = "sleepy_monitor"
+    private val handler = Handler(Looper.getMainLooper())
+    private val interval = TimeUnit.MINUTES.toMillis(15)
+    private val runnable = object : Runnable {
+        override fun run() {
+            scheduleStatusWork()
+            handler.postDelayed(this, interval)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
-        val chan = NotificationChannel(
-            CHANNEL_ID, "Sleepy", NotificationManager.IMPORTANCE_LOW
-        )
-        getSystemService(NotificationManager::class.java)
-            .createNotificationChannel(chan)
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        // 1. 创建并启动前台通知
+        val channelId = "sleepy_monitor"
+        applicationContext.getSystemService(NotificationManager::class.java)
+            .createNotificationChannel(
+                NotificationChannel(channelId, "Sleepy 常驻", NotificationManager.IMPORTANCE_MIN)
+            )
+        val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("SleepyClient 运行中")
             .setContentText("喵喵喵")
+            .setSmallIcon(android.R.drawable.sym_def_app_icon)
             .build()
+        startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
 
-        val request = OneTimeWorkRequestBuilder<SyncWorker>().setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build()
+        // 2. 启动周期性调度
+        handler.post(runnable)
+    }
 
-        WorkManager.getInstance(context)
-            .enqueue(request)
-
-        ServiceCompat.startForeground(
-            this, 1, notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-        )
+    private fun scheduleStatusWork() {
+        val request = OneTimeWorkRequestBuilder<StatusWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork("status_report", ExistingWorkPolicy.REPLACE, request)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) =

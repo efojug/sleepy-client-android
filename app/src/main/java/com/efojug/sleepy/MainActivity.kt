@@ -1,12 +1,17 @@
 package com.efojug.sleepy
 
+import android.Manifest
 import android.app.AppOpsManager
+import android.app.NotificationManager
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,6 +44,14 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        isGranted ->
+            if (!isGranted) {
+                Toast.makeText(this, "需要获取“通知”的权限", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 检查 UsageStats 权限
@@ -47,6 +60,16 @@ class MainActivity : ComponentActivity() {
             startActivity(
                 Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
             )
+        }
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        when (manager.areNotificationsEnabled()) {
+            true -> null
+            false -> {
+                Toast.makeText(this, "需要获取“通知”的权限", Toast.LENGTH_LONG).show()
+                requestPermissionLauncher.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
         }
 
         setContent {

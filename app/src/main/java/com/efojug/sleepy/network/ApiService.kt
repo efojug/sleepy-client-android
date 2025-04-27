@@ -16,8 +16,5 @@ data class DeviceStatus(
 
 interface ApiService {
     @POST
-    suspend fun postStatus(
-        @Url url: String,
-        @Body status: DeviceStatus
-    ): Response<Unit>
+    suspend fun postStatus(@Body status: DeviceStatus): Response<Unit>
 }
