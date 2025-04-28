@@ -13,16 +13,34 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.efojug.sleepy.MainActivity
 import com.efojug.sleepy.datastore.PreferencesManager
 import com.efojug.sleepy.worker.StatusWorker
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 class MonitorService : Service() {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        scheduleExpeditedStatusWork()
+        return START_STICKY
+    }
+
+    private fun scheduleExpeditedStatusWork() {
+
+        val expeditedRequest = OneTimeWorkRequestBuilder<StatusWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                "status_report_expedited",
+                ExistingWorkPolicy.REPLACE,
+                expeditedRequest
+            )
+    }
+
     private val handler = Handler(Looper.getMainLooper())
-    private val interval = TimeUnit.MINUTES.toMillis(15)
+    private val interval = TimeUnit.MINUTES.toMillis(1)
     private val runnable = object : Runnable {
         override fun run() {
             scheduleStatusWork()
@@ -56,9 +74,6 @@ class MonitorService : Service() {
         WorkManager.getInstance(applicationContext)
             .enqueueUniqueWork("status_report", ExistingWorkPolicy.REPLACE, request)
     }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) =
-        START_STICKY
 
     override fun onBind(intent: Intent?) = null
 }
