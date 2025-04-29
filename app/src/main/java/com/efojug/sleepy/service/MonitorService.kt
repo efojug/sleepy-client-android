@@ -62,7 +62,7 @@ class MonitorService : Service() {
                 handler.postDelayed(this, TimeUnit.MINUTES.toMillis(5))
             } else {
                 scheduleStatusWork()
-                handler.postDelayed(this, TimeUnit.MINUTES.toMillis(1))
+                handler.postDelayed(this, TimeUnit.MINUTES.toMillis(2))
             }
         }
     }
@@ -72,8 +72,7 @@ class MonitorService : Service() {
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         // 名称唯一，防止并发重复执行
-        WorkManager.getInstance(applicationContext)
-            .enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
     private fun isScreenOn(): Boolean {

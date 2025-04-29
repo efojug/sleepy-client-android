@@ -25,7 +25,9 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
         private const val TAG = "StatusWorker"
 
         @Volatile
-        private var lastApp: String? = null
+        private var lastPackageName: String? = null
+        @Volatile
+        private var lastAppName: String = ""
     }
 
     override suspend fun doWork(): Result {
@@ -44,23 +46,24 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
             return Result.failure()
         }
 
-        val currentApp = getForegroundApp()
+        val currentPackageName = getForegroundPackageName()
+
         // 如果本次查询为空，则回退至缓存
-        val app = if (currentApp.isNullOrEmpty()) {
-            lastApp ?: ""  // 若缓存也为空，再返回空字符串
+        val currentAppName = if (currentPackageName.isNullOrEmpty()) {
+            if (lastPackageName.isNullOrEmpty()) "" else lastAppName // 若缓存也为空，再返回空字符串
         } else {
-            lastApp = currentApp
-            currentApp
+            lastPackageName = currentPackageName
+            lastAppName = applicationContext.packageManager.getApplicationInfo(currentPackageName, 0).loadLabel(applicationContext.packageManager).toString()
+            lastAppName
         }
 
         // 屏幕状态检测
-        val pm = applicationContext
-            .getSystemService(Context.POWER_SERVICE) as PowerManager
+        val pm = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
         val status = if (pm.isInteractive) 1 else 0
 
         return try {
             val api = RetrofitClient.create()
-            val status = DeviceStatus(secret, deviceId.toInt(), status, app)
+            val status = DeviceStatus(secret, deviceId.toInt(), status, currentAppName)
             val response = api.postStatus(url, status)
 
             if (response.isSuccessful) {
@@ -93,10 +96,9 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    private fun getForegroundApp(): String? {
+    private fun getForegroundPackageName(): String? {
         // 前台应用包名获取
-        val usm = applicationContext
-            .getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val usm = applicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val end = System.currentTimeMillis()
         val stats = usm.queryUsageStats(
             UsageStatsManager.INTERVAL_BEST, end - 60_000, end
@@ -108,8 +110,7 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
         val chanId = "upload_status"
         // 确保创建了 NotificationChannel（只需一次）
         val chan = NotificationChannel(chanId, "状态上报", NotificationManager.IMPORTANCE_MIN)
-        applicationContext.getSystemService(NotificationManager::class.java)
-            .createNotificationChannel(chan)
+        applicationContext.getSystemService(NotificationManager::class.java).createNotificationChannel(chan)
         val notification = NotificationCompat.Builder(applicationContext, chanId)
             .setContentTitle("上报设备状态")
             .setContentText("正在发送…")
