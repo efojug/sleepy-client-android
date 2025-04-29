@@ -21,7 +21,6 @@ class MonitorService : Service() {
     companion object {
         private const val CHANNEL_ID = "sleepy"
         private const val WORK_NAME = "status_report"
-        private const val TAG = "MonitorService"
     }
 
     private val handler = Handler(Looper.getMainLooper())

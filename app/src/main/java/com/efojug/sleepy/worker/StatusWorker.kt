@@ -36,7 +36,7 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
         val secret = PreferencesManager.secretFlow(applicationContext).firstOrNull().orEmpty()
         val deviceId = PreferencesManager.deviceFlow(applicationContext).firstOrNull() ?: -1
 
-        if (url.isBlank() || secret.isBlank() || deviceId.equals(-1)) {
+        if (url.isBlank() || secret.isBlank() || deviceId == -1) {
             Log.e(TAG, "Input data missing: url=$url, secret=$secret, device=$deviceId")
             return Result.failure()
         }
