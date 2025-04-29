@@ -105,7 +105,7 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
-        val chanId = "status_worker"
+        val chanId = "upload_status"
         // 确保创建了 NotificationChannel（只需一次）
         val chan = NotificationChannel(chanId, "状态上报", NotificationManager.IMPORTANCE_MIN)
         applicationContext.getSystemService(NotificationManager::class.java)

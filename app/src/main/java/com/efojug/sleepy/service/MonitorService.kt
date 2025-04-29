@@ -12,11 +12,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
-import androidx.work.workDataOf
-import com.efojug.sleepy.datastore.PreferencesManager
 import com.efojug.sleepy.worker.StatusWorker
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 class MonitorService : Service() {
@@ -51,13 +47,13 @@ class MonitorService : Service() {
     override fun onCreate() {
         super.onCreate()
         // 1. 创建并启动前台通知
-        val channelId = "sleepy_monitor"
+        val channelId = "sleepy"
         applicationContext.getSystemService(NotificationManager::class.java)
             .createNotificationChannel(
-                NotificationChannel(channelId, "Sleepy 常驻", NotificationManager.IMPORTANCE_MIN)
+                NotificationChannel(channelId, "后台保活", NotificationManager.IMPORTANCE_MIN)
             )
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("SleepyClient 运行中")
+            .setContentTitle("Sleepy")
             .setContentText("喵喵喵")
             .setSmallIcon(android.R.drawable.sym_def_app_icon)
             .build()

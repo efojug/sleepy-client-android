@@ -5,14 +5,13 @@ import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.app.NotificationManager
 import android.content.Intent
-import android.net.Uri
-import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
@@ -51,7 +51,6 @@ import com.efojug.sleepy.worker.StatusWorker
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
-import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -80,9 +79,9 @@ class MainActivity : ComponentActivity() {
             true -> null
             false -> {
                 Toast.makeText(this, "需要忽略电池优化", Toast.LENGTH_LONG).show()
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                val intent = Intent(ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
                 intent.setData("package:$packageName".toUri())
-                if (intent.resolveActivity(packageManager) != null) startActivity(intent)
+                startActivity(intent)
             }
         }
 
@@ -146,7 +145,6 @@ class MainActivity : ComponentActivity() {
                     if (!url.startsWith("http://") && !url.startsWith("https://")) {
                         url = "https://$url"
                     }
-//                    if (!url.endsWith("/")) url = "$url/"
                     // 保存配置
                     scope.launch {
                         PreferencesManager.saveConfig(

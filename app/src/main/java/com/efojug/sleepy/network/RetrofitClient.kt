@@ -1,28 +1,13 @@
 package com.efojug.sleepy.network
 
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.security.SecureRandom
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-
-//object RetrofitClient {
-//    fun create(baseUrl: String): ApiService {
-//
-//        return Retrofit.Builder()
-//            .baseUrl(normalizedUrl)
-//            .addConverterFactory(GsonConverterFactory.create())
-//            .build()
-//            .create(ApiService::class.java)
-//    }
-//}
 
 object RetrofitClient {
 
