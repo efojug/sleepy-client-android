@@ -1,4 +1,3 @@
-// MainActivity.kt (完整代码)
 package com.efojug.sleepy
 
 import android.Manifest
