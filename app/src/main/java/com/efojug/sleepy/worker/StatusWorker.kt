@@ -1,16 +1,11 @@
 package com.efojug.sleepy.worker
 
 import android.app.AppOpsManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.pm.ServiceInfo
 import android.os.PowerManager
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.efojug.sleepy.datastore.PreferencesManager
 import com.efojug.sleepy.network.DeviceStatus
@@ -104,18 +99,5 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
             UsageStatsManager.INTERVAL_BEST, end - 60_000, end
         )
         return if (stats.isNullOrEmpty()) null else stats.maxByOrNull { it.lastTimeUsed }?.packageName
-    }
-
-    override suspend fun getForegroundInfo(): ForegroundInfo {
-        val chanId = "upload_status"
-        // 确保创建了 NotificationChannel（只需一次）
-        val chan = NotificationChannel(chanId, "状态上报", NotificationManager.IMPORTANCE_MIN)
-        applicationContext.getSystemService(NotificationManager::class.java).createNotificationChannel(chan)
-        val notification = NotificationCompat.Builder(applicationContext, chanId)
-            .setContentTitle("上报设备状态")
-            .setContentText("正在发送…")
-            .setSmallIcon(android.R.drawable.sym_def_app_icon)
-            .build()
-        return ForegroundInfo(42, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     }
 }

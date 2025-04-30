@@ -5,10 +5,12 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.*
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -33,6 +35,7 @@ class MonitorService : Service() {
         registerScreenReceiver()
     }
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // 启动前台服务
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -41,8 +44,7 @@ class MonitorService : Service() {
             .setSmallIcon(android.R.drawable.sym_def_app_icon)
             .build()
 
-        startForeground(1, notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
 
         // 首次调度
         handler.post(runnable)
