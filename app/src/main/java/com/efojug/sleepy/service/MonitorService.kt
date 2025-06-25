@@ -38,11 +38,8 @@ class MonitorService : Service() {
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // 启动前台服务
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Sleepy")
-            .setContentText("喵喵喵")
-            .setSmallIcon(android.R.drawable.sym_def_app_icon)
-            .build()
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle("Sleepy")
+            .setContentText("喵喵喵").setSmallIcon(android.R.drawable.sym_def_app_icon).build()
 
         startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
 
@@ -69,11 +66,12 @@ class MonitorService : Service() {
     }
 
     private fun scheduleStatusWork() {
-        val request = OneTimeWorkRequestBuilder<StatusWorker>()
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            .build()
+        val request =
+            OneTimeWorkRequestBuilder<StatusWorker>().setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build()
         // 名称唯一，防止并发重复执行
-        WorkManager.getInstance(applicationContext).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
     private fun isScreenOn(): Boolean {

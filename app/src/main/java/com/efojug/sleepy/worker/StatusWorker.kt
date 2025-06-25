@@ -17,13 +17,15 @@ import kotlinx.coroutines.flow.firstOrNull
 import retrofit2.HttpException
 import java.io.IOException
 
-class StatusWorker(context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) {
+class StatusWorker(context: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(context, workerParams) {
 
     companion object {
         private const val TAG = "StatusWorker"
 
         @Volatile
         private var lastPackageName: String? = null
+
         @Volatile
         private var lastAppName: String = ""
     }
@@ -51,7 +53,9 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
             if (lastPackageName.isNullOrEmpty()) "" else lastAppName // 若缓存也为空，再返回空字符串
         } else {
             lastPackageName = currentPackageName
-            lastAppName = applicationContext.packageManager.getApplicationInfo(currentPackageName, 0).loadLabel(applicationContext.packageManager).toString()
+            lastAppName =
+                applicationContext.packageManager.getApplicationInfo(currentPackageName, 0)
+                    .loadLabel(applicationContext.packageManager).toString()
             lastAppName
         }
 
@@ -60,15 +64,25 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
         val status = if (pm.isInteractive) 1 else 0
 
         //获取电量
-        val batteryStatus: Intent? = applicationContext.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val batteryStatus: Intent? =
+            applicationContext.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
         val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
         val batteryPct = if (level >= 0) (level * 100 / scale) else -1
-        val isCharging = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING || batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_FULL
+        val isCharging = batteryStatus?.getIntExtra(
+            BatteryManager.EXTRA_STATUS, -1
+        ) == BatteryManager.BATTERY_STATUS_CHARGING || batteryStatus?.getIntExtra(
+            BatteryManager.EXTRA_STATUS, -1
+        ) == BatteryManager.BATTERY_STATUS_FULL
 
         return try {
             val api = RetrofitClient.create()
-            val status = DeviceStatus(secret, deviceId, status, "${currentAppName} [${if (isCharging) "充电中" else "电量"}:$batteryPct%]")
+            val status = DeviceStatus(
+                secret,
+                deviceId,
+                status,
+                "${currentAppName} [${if (isCharging) "充电中" else "电量"}:$batteryPct%]"
+            )
 
             val response = api.postStatus(url, status)
 
@@ -92,8 +106,7 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
     }
 
     private fun hasUsagePermission(): Boolean {
-        val appOps = applicationContext
-            .getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOps = applicationContext.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
             android.os.Process.myUid(),
@@ -104,7 +117,8 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
 
     private fun getForegroundPackageName(): String? {
         // 前台应用包名获取
-        val usm = applicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val usm =
+            applicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val end = System.currentTimeMillis()
         val stats = usm.queryUsageStats(
             UsageStatsManager.INTERVAL_BEST, end - 60_000, end

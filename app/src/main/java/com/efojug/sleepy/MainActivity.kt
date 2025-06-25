@@ -130,7 +130,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
-                Text(color = Color(0xFF, 0, 0), text = "如果需要在手机重启后自动上报，请手动赋予“自启动”权限")
+                Text(
+                    color = Color(0xFF, 0, 0),
+                    text = "如果需要在手机重启后自动上报，请手动赋予“自启动”权限"
+                )
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = {
                     // 确保 URL 前缀
