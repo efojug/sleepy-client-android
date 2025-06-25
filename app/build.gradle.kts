@@ -13,8 +13,8 @@ android {
         applicationId = "com.efojug.sleepy"
         minSdk = 31
         targetSdk = 35
-        versionCode = 43
-        versionName = "1.8"
+        versionCode = 47
+        versionName = "2.0"
     }
 
     buildTypes {

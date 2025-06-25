@@ -1,10 +1,15 @@
 package com.efojug.sleepy
 
 import android.Manifest
+import android.R
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.AlertDialog
 import android.app.AppOpsManager
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -32,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -41,12 +47,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        isGranted ->
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (!isGranted) {
                 Toast.makeText(this, "需要获取“通知”的权限", Toast.LENGTH_LONG).show()
             }
-    }
+        }
 
     @SuppressLint("BatteryLife", "QueryPermissionsNeeded")
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -90,15 +96,15 @@ class MainActivity : ComponentActivity() {
                     PreferencesManager.secretFlow(this@MainActivity).collectLatest { secret = it }
                 }
                 launch {
-                    PreferencesManager.deviceFlow(this@MainActivity).collectLatest { deviceId = it.toString() }
+                    PreferencesManager.deviceFlow(this@MainActivity)
+                        .collectLatest { deviceId = it.toString() }
                 }
             }
 
             Column(
                 Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center
+                    .padding(16.dp), verticalArrangement = Arrangement.Center
             ) {
                 OutlinedTextField(
                     value = url,
@@ -124,6 +130,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
+                Text(color = Color(0xFF, 0, 0), text = "如果需要在手机重启后自动上报，请手动赋予“自启动”权限")
+                Spacer(Modifier.height(8.dp))
                 Button(onClick = {
                     // 确保 URL 前缀
                     if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -131,7 +139,9 @@ class MainActivity : ComponentActivity() {
                     }
                     // 保存配置
                     scope.launch {
-                        PreferencesManager.saveConfig(this@MainActivity, url, secret, deviceId.toIntOrNull() ?: 0)
+                        PreferencesManager.saveConfig(
+                            this@MainActivity, url, secret, deviceId.toIntOrNull() ?: 0
+                        )
                     }
                     // 启动 MonitorService 并隐藏 Activity
                     Intent(this@MainActivity, MonitorService::class.java).also {
@@ -148,9 +158,7 @@ class MainActivity : ComponentActivity() {
     private fun hasUsageStatsPermission(): Boolean {
         val appOps = getSystemService(APP_OPS_SERVICE) as AppOpsManager
         return appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            packageName
+            AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), packageName
         ) == AppOpsManager.MODE_ALLOWED
     }
 }

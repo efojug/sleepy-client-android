@@ -3,6 +3,9 @@ package com.efojug.sleepy.worker
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.PowerManager
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -56,9 +59,17 @@ class StatusWorker(context: Context, workerParams: WorkerParameters) : Coroutine
         val pm = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
         val status = if (pm.isInteractive) 1 else 0
 
+        //获取电量
+        val batteryStatus: Intent? = applicationContext.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+        val batteryPct = if (level >= 0) (level * 100 / scale) else -1
+        val isCharging = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING || batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_FULL
+
         return try {
             val api = RetrofitClient.create()
-            val status = DeviceStatus(secret, deviceId.toInt(), status, currentAppName)
+            val status = DeviceStatus(secret, deviceId, status, "${currentAppName} [${if (isCharging) "充电中" else "电量"}:$batteryPct%]")
+
             val response = api.postStatus(url, status)
 
             if (response.isSuccessful) {
